@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Chromium Thickness Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: linear-gradient(160deg, #0a1628 0%, #0d2347 40%, #0f3060 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 0;
+  }
+
+  .app {
+    width: 100%;
+    max-width: 420px;
+    min-height: 100vh;
+    background: linear-gradient(180deg, #0d2040 0%, #112a52 50%, #1a3a6e 100%);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Header */
+  .header {
+    background: linear-gradient(135deg, #0a1e3d 0%, #0f2d5a 100%);
+    padding: 22px 24px 18px;
+    border-bottom: 2.5px solid #1ec87a;
+  }
+  .header h1 {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.5px;
+  }
+
+  /* Main content */
+  .content {
+    padding: 20px 20px 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+
+  /* Dropdown row */
+  .dropdown-row {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .dropdown-btn {
+    background: #1ec87a;
+    border: none;
+    border-radius: 50%;
+    width: 52px;
+    height: 52px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 15px rgba(30, 200, 122, 0.4);
+    transition: all 0.2s;
+    position: relative;
+  }
+  .dropdown-btn:hover { transform: scale(1.08); box-shadow: 0 6px 20px rgba(30, 200, 122, 0.5); }
+  .dropdown-btn svg { width: 26px; height: 26px; fill: white; transition: transform 0.3s; }
+  .dropdown-btn.open svg { transform: rotate(180deg); }
+
+  /* Dropdown menu */
+  .dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 60px;
+    right: 20px;
+    background: #0d2347;
+    border: 1.5px solid #1a4a80;
+    border-radius: 14px;
+    overflow: hidden;
+    z-index: 100;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+    min-width: 160px;
+  }
+  .dropdown-menu.open { display: block; animation: fadeDown 0.2s ease; }
+  @keyframes fadeDown { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
+
+  .dropdown-item {
+    padding: 14px 20px;
+    color: #a0c4e8;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+  }
+  .dropdown-item:last-child { border-bottom: none; }
+  .dropdown-item:hover, .dropdown-item.active {
+    background: rgba(30, 200, 122, 0.15);
+    color: #1ec87a;
+  }
+
+  /* Circle display */
+  .circle-container {
+    position: relative;
+    width: 260px;
+    height: 260px;
+  }
+
+  .circle {
+    width: 260px;
+    height: 260px;
+    border-radius: 50%;
+    /* Chromium/steel metallic gradient inspired by Chrom.png */
+    background:
+      radial-gradient(circle at 38% 28%, #f0f0f0 0%, #d0d0d0 18%, #a8a8a8 38%, #787878 60%, #4a4a4a 80%, #2a2a2a 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    box-shadow:
+      0 8px 40px rgba(0,0,0,0.6),
+      0 2px 8px rgba(255,255,255,0.15),
+      inset 0 2px 6px rgba(255,255,255,0.35),
+      inset 0 -4px 12px rgba(0,0,0,0.5);
+  }
+
+  /* Wave fill inside circle — dark steel lower half */
+  .wave-fill {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 45%;
+    background: linear-gradient(180deg, #5a5a5a 0%, #2e2e2e 100%);
+    border-radius: 0 0 50% 50% / 0 0 20% 20%;
+    overflow: hidden;
+  }
+  .wave-fill::before {
+    content: '';
+    position: absolute;
+    top: -18px;
+    left: -30%;
+    width: 160%;
+    height: 36px;
+    background: radial-gradient(ellipse at 50% 100%, #888 0%, transparent 70%);
+    border-radius: 50%;
+  }
+  .wave-fill::after {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: -10%;
+    width: 120%;
+    height: 24px;
+    background: rgba(255,255,255,0.12);
+    border-radius: 50%;
+  }
+
+  .circle-label {
+    font-size: 16px;
+    /* Dark label on bright upper area for contrast */
+    color: #1a1a1a;
+    font-weight: 700;
+    position: relative;
+    z-index: 2;
+    margin-bottom: 4px;
+    margin-top: -56px; /* move up 4 char-heights (~14px each) */
+    letter-spacing: 0.3px;
+    text-shadow: 0 1px 2px rgba(255,255,255,0.4);
+  }
+
+  .circle-value {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 87px; /* 58 * 1.5 */
+    font-weight: 700;
+    color: #111;
+    line-height: 1;
+    position: relative;
+    z-index: 2;
+    letter-spacing: -2px;
+    text-shadow: 0 1px 0 rgba(255,255,255,0.5), 0 2px 6px rgba(0,0,0,0.2);
+    transition: all 0.3s;
+  }
+  .circle-value.empty { color: rgba(30,30,30,0.3); font-size: 40px; letter-spacing: 0; }
+
+  .circle-unit {
+    font-size: 18px;
+    color: #222;
+    font-weight: 600;
+    position: relative;
+    z-index: 2;
+    margin-top: 2px;
+  }
+  .wave-unit-text {
+    font-size: 18px;
+    /* Bright text on dark lower wave area */
+    color: rgba(255,255,255,0.9);
+    font-weight: 700;
+    position: absolute;
+    bottom: 18px;
+    z-index: 3;
+    letter-spacing: 0.5px;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+  }
+
+  /* Calculate button */
+  .calc-btn {
+    background: linear-gradient(135deg, #1a3a6e 0%, #1e4580 100%);
+    border: none;
+    border-radius: 50px;
+    padding: 16px 48px;
+    font-size: 20px;
+    font-weight: 800;
+    color: #fff;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: all 0.2s;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+    margin-top: 4px;
+  }
+  .calc-btn:hover {
+    background: linear-gradient(135deg, #1e4585 0%, #23529a 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 25px rgba(0,0,0,0.35);
+  }
+  .calc-btn:active { transform: translateY(0); }
+
+  /* Warning */
+  .warning-box {
+    width: 100%;
+    display: none;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 14px;
+    animation: fadeIn 0.4s ease;
+  }
+  .warning-box.visible { display: flex; }
+  @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+
+  .warning-icon {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    margin-top: 1px;
+  }
+
+  .warning-text {
+    font-size: 13.5px;
+    color: #e06060;
+    line-height: 1.6;
+    font-weight: 600;
+    text-align: center;
+    width: 100%;
+  }
+
+  /* Bottom params */
+  .params-bar {
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-start;
+    padding: 16px 10px 24px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    margin-top: 4px;
+  }
+
+  .param-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+  }
+
+  .param-value {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 32px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    min-width: 40px;
+    text-align: center;
+    padding: 2px 4px;
+    border-radius: 4px;
+  }
+  .param-value:hover { border-bottom-color: #1ec87a; background: rgba(30,200,122,0.08); }
+  .param-value:focus {
+    outline: none;
+    border-bottom-color: #1ec87a;
+    background: rgba(30,200,122,0.12);
+    color: #1ec87a;
+  }
+
+  /* Unit special styling */
+  .param-unit-display {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 30px;
+    font-weight: 700;
+    color: #fff;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 6px;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    position: relative;
+  }
+  .param-unit-display:hover { border-bottom-color: #1ec87a; background: rgba(30,200,122,0.08); }
+
+  .unit-dropdown-menu {
+    display: none;
+    position: absolute;
+    bottom: 60px;
+    right: 10px;
+    background: #0d2347;
+    border: 1.5px solid #1a4a80;
+    border-radius: 12px;
+    overflow: hidden;
+    z-index: 100;
+    box-shadow: 0 -8px 30px rgba(0,0,0,0.4);
+    min-width: 100px;
+  }
+  .unit-dropdown-menu.open { display: block; animation: fadeUp 0.2s ease; }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+  .unit-item {
+    padding: 12px 20px;
+    color: #a0c4e8;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    font-family: 'Rajdhani', sans-serif;
+    letter-spacing: 0.5px;
+  }
+  .unit-item:last-child { border-bottom: none; }
+  .unit-item:hover, .unit-item.active {
+    background: rgba(30, 200, 122, 0.15);
+    color: #1ec87a;
+  }
+
+  .param-label {
+    font-size: 12px;
+    color: rgba(160, 196, 232, 0.7);
+    font-weight: 600;
+    text-align: center;
+    line-height: 1.3;
+  }
+
+  /* Relative positioning for dropdowns */
+  .relative { position: relative; }
+
+  /* Angstrom symbol */
+  .angstrom-sym {
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <h1>Chromium thickness</h1>
+  </div>
+
+  <div class="content">
+    <!-- Dropdown selector -->
+    <div class="dropdown-row relative">
+      <button class="dropdown-btn" id="dropdownBtn" onclick="toggleDropdown()">
+        <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+      </button>
+      <div class="dropdown-menu" id="dropdownMenu">
+        <div class="dropdown-item" onclick="selectCalotte('Calotte 1', 0)">Calotte 1</div>
+        <div class="dropdown-item" onclick="selectCalotte('Calotte 2', 1)">Calotte 2</div>
+        <div class="dropdown-item" onclick="selectCalotte('Calotte 3', 2)">Calotte 3</div>
+        <div class="dropdown-item" onclick="selectCalotte('Calotte 4', 3)">Calotte 4</div>
+      </div>
+    </div>
+
+    <!-- Circle result -->
+    <div class="circle-container">
+      <div class="circle">
+        <span class="circle-label" id="circleLabel"></span>
+        <span class="circle-value empty" id="circleValue">—</span>
+        <div class="wave-fill"></div>
+        <span class="wave-unit-text" id="waveUnit"></span>
+      </div>
+    </div>
+
+    <!-- Calculate button -->
+    <button class="calc-btn" onclick="calculate()">Calculate</button>
+
+    <!-- Warning -->
+    <div class="warning-box" id="warningBox">
+      <svg class="warning-icon" viewBox="0 0 24 24" fill="none">
+        <path d="M12 2L1 21h22L12 2z" fill="#e06060" stroke="#e06060" stroke-width="1"/>
+        <path d="M12 9v5" stroke="white" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="12" cy="17" r="1" fill="white"/>
+      </svg>
+      <span class="warning-text">ค่าความหนานี้เป็นเพียงค่าที่ได้จากการคำนวณ ยังไม่ได้พิจารณา Performance หรือ Loss ต่างๆ ซึ่งอาจจะส่งผลต่อค่าความหนาที่แท้จริง</span>
+    </div>
+  </div>
+
+  <!-- Params bar -->
+  <div class="params-bar">
+    <div class="param-item">
+      <span class="param-value" id="powerVal" contenteditable="true" oninput="sanitizeInput(this)"></span>
+      <span class="param-label">Power<br>( kW )</span>
+    </div>
+    <div class="param-item">
+      <span class="param-value" id="speedVal" contenteditable="true" oninput="sanitizeInput(this)"></span>
+      <span class="param-label">Speed<br>( rpm )</span>
+    </div>
+    <div class="param-item">
+      <span class="param-value" id="cathodeVal" contenteditable="true" oninput="sanitizeInput(this)"></span>
+      <span class="param-label">Cathode<br>( Number )</span>
+    </div>
+    <div class="param-item relative">
+      <span class="param-unit-display" id="unitDisplay" onclick="toggleUnitDropdown()">
+        <span style="font-size:18px;color:rgba(160,196,232,0.5)">—</span>
+      </span>
+      <div class="unit-dropdown-menu" id="unitMenu">
+        <div class="unit-item" onclick="selectUnit('Å', 'Angstrom')">Å</div>
+        <div class="unit-item" onclick="selectUnit('nm', 'Nanometer')">nm</div>
+      </div>
+      <span class="param-label">Units<br>of measurement</span>
+    </div>
+  </div>
+</div>
+
+<script>
+  let selectedCalotte = 0;
+  let selectedUnit = '';
+  let unitLabel = '';
+  let dropdownOpen = false;
+  let unitDropdownOpen = false;
+
+  const calotteNames = ['Calotte 1', 'Calotte 2', 'Calotte 3', 'Calotte 4'];
+
+  // Formulas (Å)
+  const formulas = [
+    (p, s, c) => 680 * p * c / (s * (58/40) * (1.5/1)),
+    (p, s, c) => 680 * p * c / (s * (40/40) * (1.2/1)),
+    (p, s, c) => 680 * p * c / (s * (58/40) * (1.5/1)),
+    (p, s, c) => 680 * p * c / (s * (50/40) * (1.2/1)),
+  ];
+
+  function toggleDropdown() {
+    dropdownOpen = !dropdownOpen;
+    document.getElementById('dropdownBtn').classList.toggle('open', dropdownOpen);
+    document.getElementById('dropdownMenu').classList.toggle('open', dropdownOpen);
+    if (unitDropdownOpen) closeUnitDropdown();
+  }
+
+  function closeDropdown() {
+    dropdownOpen = false;
+    document.getElementById('dropdownBtn').classList.remove('open');
+    document.getElementById('dropdownMenu').classList.remove('open');
+  }
+
+  function selectCalotte(name, index) {
+    selectedCalotte = index;
+    document.getElementById('circleLabel').textContent = name;
+
+    // Mark active
+    document.querySelectorAll('.dropdown-item').forEach((el, i) => {
+      el.classList.toggle('active', i === index);
+    });
+
+    // Reset result and warning
+    const cv = document.getElementById('circleValue');
+    cv.textContent = '—';
+    cv.classList.add('empty');
+    document.getElementById('warningBox').classList.remove('visible');
+
+    closeDropdown();
+  }
+
+  function toggleUnitDropdown() {
+    unitDropdownOpen = !unitDropdownOpen;
+    document.getElementById('unitMenu').classList.toggle('open', unitDropdownOpen);
+    if (dropdownOpen) closeDropdown();
+  }
+
+  function closeUnitDropdown() {
+    unitDropdownOpen = false;
+    document.getElementById('unitMenu').classList.remove('open');
+  }
+
+  function selectUnit(unit, label) {
+    selectedUnit = unit;
+    unitLabel = label;
+    document.getElementById('unitDisplay').innerHTML = unit === 'Å'
+      ? '<span class="angstrom-sym">Å</span>'
+      : '<span style="font-size:22px">nm</span>';
+    document.getElementById('waveUnit').textContent = label;
+
+    // Mark active
+    document.querySelectorAll('.unit-item').forEach(el => {
+      el.classList.toggle('active', el.textContent.trim() === unit);
+    });
+
+    // Reset result
+    const cv = document.getElementById('circleValue');
+    cv.textContent = '—';
+    cv.classList.add('empty');
+    document.getElementById('warningBox').classList.remove('visible');
+
+    closeUnitDropdown();
+  }
+
+  function sanitizeInput(el) {
+    let val = el.textContent.replace(/[^0-9.]/g, '');
+    if (val !== el.textContent) {
+      el.textContent = val;
+      const range = document.createRange();
+      const sel = window.getSelection();
+      range.selectNodeContents(el);
+      range.collapse(false);
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+  }
+
+  // Clear field on click (reset old value so user types fresh)
+  document.querySelectorAll('.param-value').forEach(el => {
+    el.addEventListener('focus', function() {
+      this.textContent = '';
+    });
+  });
+
+  function calculate() {
+    const p = parseFloat(document.getElementById('powerVal').textContent) || 0;
+    const s = parseFloat(document.getElementById('speedVal').textContent) || 0;
+    const c = parseFloat(document.getElementById('cathodeVal').textContent) || 0;
+
+    if (!selectedUnit) {
+      alert('กรุณาเลือก Unit ก่อน');
+      return;
+    }
+    if (s === 0) {
+      alert('Speed (rpm) ต้องไม่เป็น 0');
+      return;
+    }
+
+    let result = formulas[selectedCalotte](p, s, c);
+    if (selectedUnit === 'nm') result = result / 10;
+
+    const rounded = Math.round(result);
+    const cv = document.getElementById('circleValue');
+    cv.textContent = rounded.toLocaleString();
+    cv.classList.remove('empty');
+
+    // Show warning
+    document.getElementById('warningBox').classList.add('visible');
+  }
+
+  // Close dropdowns when clicking outside
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('#dropdownBtn') && !e.target.closest('#dropdownMenu')) {
+      closeDropdown();
+    }
+    if (!e.target.closest('#unitDisplay') && !e.target.closest('#unitMenu')) {
+      closeUnitDropdown();
+    }
+  });
+
+  // Prevent enter key in contenteditable
+  document.querySelectorAll('[contenteditable]').forEach(el => {
+    el.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); el.blur(); }
+    });
+  });
+</script>
+</body>
+</html>
